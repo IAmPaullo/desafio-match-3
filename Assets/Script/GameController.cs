@@ -6,7 +6,13 @@ public class GameController
     private List<List<Tile>> _boardTiles;
     private List<int> _tilesTypes;
     private int _tileCount;
+    private static int _scoreCount;
+    private static readonly int _scoreAmountToAdd = 2;
 
+    public int GetScore()
+    {
+        return _scoreCount;
+    }
     public List<List<Tile>> StartGame(int boardWidth, int boardHeight)
     {
         _tilesTypes = new List<int> { 0, 1, 2, 3 };
@@ -156,6 +162,7 @@ public class GameController
     private static List<List<bool>> FindMatches(List<List<Tile>> newBoard)
     {
         List<List<bool>> matchedTiles = new List<List<bool>>();
+
         for (int y = 0; y < newBoard.Count; y++)
         {
             matchedTiles.Add(new List<bool>(newBoard[y].Count));
@@ -169,27 +176,103 @@ public class GameController
         {
             for (int x = 0; x < newBoard[y].Count; x++)
             {
-                if (x > 1
-                    && newBoard[y][x].type == newBoard[y][x - 1].type
-                    && newBoard[y][x - 1].type == newBoard[y][x - 2].type)
-                {
-                    matchedTiles[y][x] = true;
-                    matchedTiles[y][x - 1] = true;
-                    matchedTiles[y][x - 2] = true;
-                }
-                if (y > 1
-                    && newBoard[y][x].type == newBoard[y - 1][x].type
-                    && newBoard[y - 1][x].type == newBoard[y - 2][x].type)
+                if (CheckSquareMatch(newBoard, x, y))
                 {
                     matchedTiles[y][x] = true;
                     matchedTiles[y - 1][x] = true;
-                    matchedTiles[y - 2][x] = true;
+                    matchedTiles[y][x - 1] = true;
+                    matchedTiles[y - 1][x - 1] = true;
+                }
+                if (CheckHorizontalSimpleMatch(newBoard, x, y))
+                {
+                    if (CheckHorizontalClearLine(newBoard, x, y))
+                    {
+                        if (CheckHorizontalClearType(newBoard, x, y))
+                        {
+                            int matchedType = newBoard[y][x].type;
+                            for (int g = 0; g < newBoard.Count; g++)
+                            {
+                                for (int h = 0; h < newBoard.Count; h++)
+                                {
+                                    if (newBoard[g][h].type == matchedType)
+                                    {
+                                        matchedTiles[g][h] = true;
+                                        _scoreCount += _scoreAmountToAdd * 2;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < newBoard[y].Count; i++)
+                            {
+                                matchedTiles[y][i] = true;
+                            }
+                            _scoreCount += _scoreAmountToAdd * newBoard[y].Count;
+                        }
+                    }
+                    else
+                    {
+                        matchedTiles[y][x] = true;
+                        matchedTiles[y][x - 1] = true;
+                        matchedTiles[y][x - 2] = true;
+                        _scoreCount += _scoreAmountToAdd;
+
+                        //square shape
+                        //matchedTiles[y][x] = true;
+                        //matchedTiles[y - 1][x] = true;
+                        //matchedTiles[y][x - 1] = true;
+                        //matchedTiles[y - 1][x - 1] = true;
+                        //cross shape
+                        //matchedTiles[y][x] = true;
+                        //matchedTiles[y - 1][x] = true;
+                        //matchedTiles[y + 1][x] = true;
+                        //matchedTiles[y][x - 1] = true;
+                        //matchedTiles[y][x + 1] = true;
+                    }
+                }
+                if (CheckVerticalSimpleMatch(newBoard, x, y))
+                {
+                    if (CheckVerticalLineClear(newBoard, x, y))
+                    {
+                        if (CheckVerticalClearType(newBoard, x, y))
+                        {
+                            //clear all tiles with same type
+                            int matchedType = newBoard[y][x].type;
+                            for (int g = 0; g < newBoard.Count; g++)
+                            {
+                                for (int h = 0; h < newBoard.Count; h++)
+                                {
+                                    if (newBoard[g][h].type == matchedType)
+                                    {
+                                        matchedTiles[g][h] = true;
+                                        _scoreCount += _scoreAmountToAdd * 2;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < newBoard[y].Count; i++)
+                            {//clear column
+                                matchedTiles[i][x] = true;
+                            }
+                            _scoreCount += _scoreAmountToAdd * newBoard[y].Count;
+                        }
+                    }
+                    else
+                    {
+                        matchedTiles[y][x] = true;
+                        matchedTiles[y - 1][x] = true;
+                        matchedTiles[y - 2][x] = true;
+                        _scoreCount += _scoreAmountToAdd;
+                    }
                 }
             }
         }
-
         return matchedTiles;
     }
+
 
     private static List<List<Tile>> CopyBoard(List<List<Tile>> boardToCopy)
     {
@@ -248,4 +331,47 @@ public class GameController
 
         return board;
     }
+    private static bool CheckSquareMatch(List<List<Tile>> newBoard, int x, int y)
+    {
+        return x > 1 && y > 1
+                && newBoard[y][x].type == newBoard[y - 1][x].type
+                && newBoard[y][x].type == newBoard[y][x - 1].type
+                && newBoard[y][x].type == newBoard[y - 1][x - 1].type;
+    }
+    private static bool CheckHorizontalSimpleMatch(List<List<Tile>> newBoard, int x, int y)
+    {
+        return x > 1
+                && newBoard[y][x].type == newBoard[y][x - 1].type
+                && newBoard[y][x - 1].type == newBoard[y][x - 2].type;
+    }
+    private static bool CheckHorizontalClearLine(List<List<Tile>> newBoard, int x, int y)
+    {
+        return x >= 3
+                && x <= newBoard[y].Count
+                && newBoard[y][x - 2].type == newBoard[y][x - 3].type;
+    }
+    private static bool CheckHorizontalClearType(List<List<Tile>> newBoard, int x, int y)
+    {
+        return x >= 4
+                && newBoard[y][x - 3].type == newBoard[y][x - 4].type;
+    }
+
+    private static bool CheckVerticalSimpleMatch(List<List<Tile>> newBoard, int x, int y)
+    {
+        return y > 1
+                && newBoard[y][x].type == newBoard[y - 1][x].type
+                && newBoard[y - 1][x].type == newBoard[y - 2][x].type;
+    }
+    private static bool CheckVerticalLineClear(List<List<Tile>> newBoard, int x, int y)
+    {
+        return y >= 3
+                && y <= newBoard[y].Count
+                && newBoard[y - 2][x].type == newBoard[y - 3][x].type;
+    }
+    private static bool CheckVerticalClearType(List<List<Tile>> newBoard, int x, int y)
+    {
+        return y >= 4
+                && newBoard[y - 3][x].type == newBoard[y - 4][x].type;
+    }
+
 }

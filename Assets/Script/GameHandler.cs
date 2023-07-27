@@ -55,7 +55,6 @@ public class GameHandler : MonoBehaviour
                     else
                     {
                         List<BoardSequence> swapResult = gameController.SwapTile(selectedX, selectedY, x, y);
-
                         AnimateBoard(swapResult, 0, () => isAnimating = false);
                     }
 
